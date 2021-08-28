@@ -234,19 +234,19 @@ dependencies {
 			'org.eclipse.jdt.core.compiler:ecj:4.3.1'
 }
 
-//task compileJasperJava(dependsOn: 'compileJava') << {
-//
-//	def jasperSourceDir = file('src/main/reports')
-//	def jasperTargetDir = file('src/main/reports')
-//	ant {
-//		taskdef(name: 'jrc', classname: 'net.sf.jasperreports.ant.JRAntCompileTask', classpath: configurations.jasperreports.asPath)
-//		jasperTargetDir.mkdirs()
-//		jrc(srcdir: jasperSourceDir, destdir: jasperTargetDir) {
-//			classpath(path: sourceSets.main.output.classesDir)
-//			include(name: '**.jrxml')
-//		}
-//	}
-//}
+task compileJasperJava(dependsOn: 'compileJava') << {
+
+	def jasperSourceDir = file('src/main/reports')
+	def jasperTargetDir = file('src/main/reports')
+	ant {
+		taskdef(name: 'jrc', classname: 'net.sf.jasperreports.ant.JRAntCompileTask', classpath: configurations.jasperreports.asPath)
+		jasperTargetDir.mkdirs()
+		jrc(srcdir: jasperSourceDir, destdir: jasperTargetDir) {
+			classpath(path: sourceSets.main.output.classesDir)
+			include(name: '**.jrxml')
+		}
+	}
+}
 
 def sonar = new Properties()
 file("src/main/resources/sonar.properties").withInputStream { sonar.load(it) }
