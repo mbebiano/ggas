@@ -1,0 +1,532 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+buildscript {
+	repositories {
+		mavenCentral()
+		maven {       url "https://plugins.gradle.org/m2/"     }
+	}
+	dependencies {
+		classpath 'com.mapvine:gradle-cobertura-plugin:0.1'
+		classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.7"
+		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
+		
+	}
+}
+
+apply plugin: 'jacoco'
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'eclipse-wtp'
+apply plugin: "org.sonarqube"
+apply plugin: 'com.github.johnrengelman.shadow'
+
+compileJava.options.encoding = 'UTF-8'
+compileJava.options.debug = true
+compileJava.options.compilerArgs = ["-g"]
+
+sourceSets.main.output.resourcesDir = sourceSets.main.output.classesDir
+
+sourceSets {
+	main {
+		java {
+			srcDirs = ["src/main/java", "src/main/reports", "src/main/resources"]
+
+		}
+	}
+}
+
+def prop = new Properties()
+file("src/main/resources/constantes.properties").withInputStream { prop.load(it) }
+
+version = prop.getProperty("VERSAO_BUILD")
+
+// Uses JDK 8
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+	mavenCentral()
+	mavenLocal()
+	maven { url "https://repo1.maven.org/maven2" }
+	maven { url "https://maven.springframework.org/release" }
+	maven { url "https://maven.springframework.org/milestone" }
+	maven { url "http://spring-roo-repository.springsource.org/release" }
+	maven { url "http://download.eclipse.org/rt/eclipselink/maven.repo" }
+	maven { url "http://repository.jboss.org/maven"}
+	maven { url "http://jasperreports.sourceforge.net/maven2/"}
+	maven { url "http://jaspersoft.artifactoryonline.com/jaspersoft/third-party-ce-artifacts/"}
+   // maven { url "https://repo.spring.io/libs-milestone/" }
+   // maven { url "https://repo.spring.io/plugins-release/" }
+	maven { url "http://maven.icm.edu.pl/artifactory/repo/com/"}
+	maven { url "https://jaspersoft.jfrog.io/jaspersoft/third-party-ce-artifacts/"}
+	maven { url "https://mvnrepository.com/artifact/com.oracle.database.jdbc/ojdbc6" }
+	
+}
+
+
+
+//Project dependencies
+dependencies {
+	compile(['junit:junit:4.11'],
+			['log4j:log4j:1.2.17'],
+			['org.easymock:easymock:3.4'],
+			['io.takari.junit:takari-cpsuite:1.2.7'],
+
+			['org.slf4j:slf4j-api:1.7.5'],
+			['org.slf4j:slf4j-log4j12:1.7.5'],
+			['org.slf4j:slf4j-api:1.7.12'],
+			['org.slf4j:slf4j-log4j12:1.7.12'],
+			['org.slf4j:jcl-over-slf4j:1.7.12'],
+			['org.slf4j:jcl104-over-slf4j:1.5.11'],
+			['org.jboss.logging:jboss-logging:3.1.0.CR2'],
+
+			['org.aspectj:aspectjrt:1.7.4'],
+			['org.aspectj:aspectjweaver:1.7.4'],
+			['javax.servlet:servlet-api:2.5'],
+			['net.sf.flexjson:flexjson:2.1'],
+
+			['org.springframework:spring-core:3.2.9.RELEASE'],
+			['org.springframework:spring-test:3.2.9.RELEASE'],
+			['org.springframework:spring-context:3.2.9.RELEASE'],
+			['org.springframework:spring-aop:3.2.9.RELEASE'],
+			['org.springframework:spring-aspects:3.2.9.RELEASE'],
+			['org.springframework.batch:spring-batch-core:2.2.7.RELEASE'],
+			['org.springframework.data:spring-data-jpa:1.4.3.RELEASE'],
+			['org.springframework:spring-webmvc:3.2.6.RELEASE'],
+			['org.springframework.webflow:spring-js-resources:2.2.1.RELEASE'],
+			['org.springframework:spring-context:3.2.9.RELEASE'],
+			['org.springframework.integration:spring-integration-mail:3.0.6.RELEASE'],
+			['org.springframework:spring-jdbc:3.2.6.RELEASE'],
+			['org.springframework:spring-orm:3.2.6.RELEASE'],
+			['org.springframework.security:spring-security-web:3.1.0.RELEASE'],
+			['org.springframework.security:spring-security-taglibs:3.1.0.RELEASE'],
+			['org.jvnet.jax-ws-commons.spring:jaxws-spring:1.9'],
+			['org.quartz-scheduler:quartz:1.8.5'],
+
+			['javax.xml.ws:jaxws-api:2.2.11'],
+
+			['javax.validation:validation-api:1.0.0.GA'],
+			['javax.transaction:jta:1.1'],
+			['commons-pool:commons-pool:1.5.6'],
+			['commons-fileupload:commons-fileupload:1.2.2'],
+			['javax.servlet.jsp.jstl:jstl-api:1.2'],
+			//['jstl:jstl:1.1.2'],
+			['taglibs:standard:1.1.2'],
+
+			//['org.glassfish.web:jstl-impl:1.2'],
+			['javax.el:el-api:2.2'],
+			['joda-time:joda-time:1.6'],
+			['javax.servlet.jsp:jsp-api:2.1'],
+			['commons-codec:commons-codec:1.5'],
+			['org.apache.tiles:tiles-jsp:2.2.2'],
+			['commons-validator:commons-validator:1.6'],
+			
+			['com.h2database:h2:1.3.172'],
+			['mysql:mysql-connector-java:5.1.31'],
+			['org.postgresql:postgresql:9.2-1003-jdbc4'],
+			['com.oracle.database.jdbc:ojdbc6:11.2.0.4'],
+
+			['displaytag:displaytag:1.2'],
+			['org.hibernate:hibernate-core:3.6.10.Final'],
+			['org.hibernate:hibernate-ehcache:3.6.10.Final'],
+			['org.hibernate:hibernate-validator:4.2.0.Final'],
+			['org.hibernate:hibernate-commons-annotations:3.2.0.Final'],
+			['org.hibernate.javax.persistence:hibernate-jpa-2.0-api:1.0.1.Final'],
+			['org.hibernate:hibernate-entitymanager:3.6.10.Final'],
+			['org.hibernate:hibernate-c3p0:3.6.10.Final'],
+
+			['javax.validation:validation-api:1.0.0.GA'],
+			['net.tanesha.recaptcha4j:recaptcha4j:0.0.7'],
+
+			['org.apache.poi:poi:3.15'],
+			['org.apache.poi:poi-ooxml:3.11'],
+
+			['javax.mail:mail:1.4.3'],
+			['commons-io:commons-io:1.4'],
+			['org.codehaus.jackson:jackson-mapper-asl:1.9.12'],
+
+			['org.directwebremoting:dwr:3.0.2-RELEASE'],
+
+			//['net.sf.jasperreports:jasperreports:5.6.0'],
+			//['net.sf.jasperreports:jasperreports-fonts:5.6.1'],
+
+			//['eclipse:jdtcore:3.2.0.v_658'],
+			['org.eclipse.jdt.core.compiler:ecj:4.3.1'],
+
+			['net.sf.barcode4j:barcode4j-light:2.0'],
+			['net.sourceforge.barbecue:barbecue:1.5-beta1'],
+
+			['com.google.code.gson:gson:2.3.1'],
+			['org.jdom:jdom-legacy:1.1.3'],
+
+			['commons-digester:commons-digester:1.8'],
+			['org.codehaus.groovy:groovy-all:2.3.6'],
+
+
+			["wsdl4j:wsdl4j:1.6.1"],
+			["com.sun.xml.bind:jaxb-xjc:2.2.4-1"],
+
+			['com.sun.xml.ws:rt:2.2.10'],
+			['com.sun.xml.ws:jaxws-rt:2.2.10'],
+
+			["xerces:xercesImpl:2.11.0"],
+
+			['org.seleniumhq.selenium:selenium-java:3.14.0'],
+			['org.seleniumhq.selenium:selenium-server:3.14.0'],
+			['org.seleniumhq.selenium:selenium-api:3.14.0'],
+			['org.seleniumhq.selenium:selenium-support:3.14.0'],
+			['org.seleniumhq.selenium:selenium-remote-driver:3.14.0'],
+			['org.seleniumhq.selenium:selenium-firefox-driver:3.14.0'],
+			['org.seleniumhq.selenium:selenium-chrome-driver:3.14.0'],
+
+			['com.saucelabs:sauce_junit:2.1.18'],
+			['commons-beanutils:commons-beanutils:1.9.3'],
+
+			['ar.com.fdvs:DynamicJasper-core-fonts:1.0'],
+			['com.github.docker-java:docker-java:3.0.14']
+
+	)
+
+	compile('net.sf.jasperreports:jasperreports:6.4.3'){
+		exclude(group: 'org.olap4j')
+		exclude(group: 'com.lowagie')
+		exclude(group: 'eclipse')
+	}
+
+	compile group: 'com.itextpdf', name: 'itextpdf', version: '5.5.12'
+	compile group: 'com.lowagie', name: 'itext', version: '2.1.7'
+	compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.6'
+	compile group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.2.1'
+	compile group: 'org.freemarker', name: 'freemarker', version: '2.3.14'
+	compile group: 'com.unboundid', name: 'unboundid-ldapsdk', version: '4.0.9'
+
+	//include in compile only, exclude in the war
+	providedCompile 'javax.servlet:servlet-api:2.5','javax.el:el-api:2.2'
+
+	compile('commons-dbcp:commons-dbcp:1.4'){
+		exclude module: 'commons-logging'
+		exclude module: 'xml-apis'
+		exclude module: 'commons-digester'
+	}
+	compile('org.springframework.security:spring-security-core:3.1.0.RELEASE'){
+		exclude module: 'commons-logging'
+		exclude module: 'commons-digester'
+	}
+	compile('org.springframework.security:spring-security-config:3.1.0.RELEASE'){
+		exclude module: 'commons-logging'
+		exclude module: 'commons-digester'
+	}
+	compile('commons-digester:commons-digester:2.1'){
+		exclude module: 'commons-logging'
+		exclude module: 'commons-digester'
+	}
+}
+configurations {
+	jasperreports {
+		transitive = true
+	}
+}
+
+dependencies {
+	jasperreports 'net.sf.jasperreports:jasperreports:6.4.3',
+			'org.codehaus.groovy:groovy-all:2.3.6',
+			'net.sf.barcode4j:barcode4j-light:2.0',
+			'org.eclipse.jdt.core.compiler:ecj:4.3.1'
+}
+
+task compileJasperJava(dependsOn: 'compileJava') << {
+
+	def jasperSourceDir = file('src/main/reports')
+	def jasperTargetDir = file('src/main/reports')
+	ant {
+		taskdef(name: 'jrc', classname: 'net.sf.jasperreports.ant.JRAntCompileTask', classpath: configurations.jasperreports.asPath)
+		jasperTargetDir.mkdirs()
+		jrc(srcdir: jasperSourceDir, destdir: jasperTargetDir) {
+			classpath(path: sourceSets.main.output.classesDir)
+			include(name: '**.jrxml')
+		}
+	}
+}
+
+def sonar = new Properties()
+file("src/main/resources/sonar.properties").withInputStream { sonar.load(it) }
+
+task genSonarProperties {
+	def writer = new FileWriter(file('sonar-project.properties'))
+	def p = new Properties()
+	p.setProperty( "sonar.projectName", "GGAS")
+	p.setProperty( "sonar.projectKey", "br.com.ggas:ggas")
+	p.setProperty( "sonar.projectVersion", version)
+	p.setProperty( "sonar.java.sources", "src/main/java")
+	p.setProperty( "sonar.java.binaries", "build/classes/main")
+	p.setProperty( "sonar.sources", "src/main/java")
+	p.setProperty( "sonar.binaries", "build/classes/main")
+	p.setProperty( "sonar.tests", "src/test")
+	p.setProperty( "sonar.sourceEncoding", "UTF-8")
+	p.setProperty( "sonar.java.source", "1.8")
+	p.setProperty( "sonar.java.coveragePlugin", "jacoco")
+	p.setProperty( "sonar.language", "java")
+	p.setProperty( "sonar.surefire.reportsPath", "build/test-results")
+	p.setProperty( "sonar.junit.reportsPath", "build/test-results")
+	p.setProperty( "sonar.jacoco.itReportPath", "build/jacoco/selenium.exec")
+	p.setProperty( "sonar.jacoco.reportPath", "build/jacoco/test.exec" )
+	p.setProperty( "sonar.host.url", sonar.getProperty("sonar.host.url") )
+	p.setProperty( "sonar.jdbc.url", sonar.getProperty("sonar.jdbc.url") )
+	p.setProperty( "sonar.jdbc.driverClassName", sonar.getProperty("sonar.jdbc.driverClassName"))
+	p.setProperty( "sonar.jdbc.username", sonar.getProperty("sonar.jdbc.username"))
+	p.setProperty( "sonar.jdbc.password", sonar.getProperty("sonar.jdbc.password"))
+
+	if(project.hasProperty('projectName')){
+		p.setProperty( "sonar.projectName", projectName)
+	}
+	if(project.hasProperty('projectKey')){
+		p.setProperty( "sonar.projectKey", projectKey)
+	}
+	p.store( writer, null)
+}
+
+task copyJasper(type: Copy) {
+	from 'src/main/reports'
+	into 'build/classes/main/'
+	include '**/*.jasper'
+	include '**/*.jrxml'
+	include '**/*.PNG'
+	include '**/*.png'
+}
+
+
+task copyJasperResources(type: Copy) {
+	from 'src/main/reports'
+	into 'build/classes/test'
+	include '*.jasper'
+	include '**/*.PNG'
+	include '**/*.png'
+}
+
+task copyJasperBuild(type: Copy) {
+	from 'src/main/reports'
+	into 'build/classes/main'
+	include '**/*.jasper'
+	include '**/*.jrxml'
+	include '**/*.PNG'
+	include '**/*.png'
+}
+
+
+
+
+task copyHbm(type: Copy) {
+	from 'src/main/java/br/com/ggas'
+	into 'build/resources/main/br/com/ggas/'
+	include '**/*.hbm.xml'
+}
+
+task copyHbmResources(type: Copy) {
+	from 'src/main/java/br/com/ggas'
+	into 'build/classes/test/br/com/ggas/'
+	include '**/*.hbm.xml'
+}
+
+task copyHbmBuild(type: Copy) {
+	from 'src/main/java/br/com/ggas'
+	into 'build/classes/main/br/com/ggas/'
+	include '**/*.hbm.xml'
+}
+
+task copyHbmCobertura(type: Copy) {
+	from 'src/main/java/br/com/ggas'
+	into 'build/instrumented/br/com/ggas/'
+	include '**/*.hbm.xml'
+}
+
+task migration ( type: JavaExec) {
+
+	if(project.hasProperty("sqlPath")) {
+		args Eval.me(sqlPath)
+	} else {
+	args new File("sql").absolutePath
+	}
+
+	main = 'br.com.ggas.infra.MigrationTask'
+	classpath = sourceSets.main.runtimeClasspath
+	doFirst {
+		def cp = CollectionUtils.join(File.pathSeparator, classpath.getFiles())
+		environment 'CLASSPATH', cp
+		classpath = classpath.filter { false }
+	}
+	maxHeapSize = "1024m"
+
+	jvmArgs "-XX:MaxPermSize=512m", "-XX:-UseSplitVerifier"
+
+}
+
+task dropTestDB ( type: JavaExec) {
+	main = 'br.com.ggas.infra.DropTestDBTask'
+	classpath = sourceSets.main.runtimeClasspath
+	maxHeapSize = "1024m"
+	//jvmArgs "-XX:MaxPermSize=512m", "-XX:-UseSplitVerifier"
+
+}
+
+task copyHbmJar(type: Copy) {
+	from 'src/main/java/br/com/ggas'
+	into 'build/classes/java/main/br/com/ggas/'
+	include '**/*.hbm.xml'
+}
+
+task copySpringConfigJar(type: Copy) {
+	from 'src/main/webapp/WEB-INF'
+	into 'build/classes/main/'
+	include '**/*.xml'
+}
+
+shadowJar {
+	destinationDir = file(prop.getProperty("PATH_GGAS_JAR"))
+	zip64 true
+	
+	append("META-INF/spring.schemas")
+	append("META-INF/spring.handlers")
+	
+	append 'jasperreports_extension.properties'
+	archiveName 'ggas.jar'
+}
+
+jar {
+  manifest {
+	attributes("Class-Path": configurations.compile.collect { it.getName() }.join(' '),
+			   "Main-Class": "br.com.ggas.infra.processos.BatchExecutorTask")
+  }
+}
+
+task faturar ( type: JavaExec ) {
+
+	if(project.hasProperty("cdl")) {
+		args Eval.me(cdl)
+	}
+
+	if (project.hasProperty("grupo")) {
+		args Eval.me(grupo)
+	}
+
+	if (project.hasProperty("rota")) {
+		args Eval.me(rota)
+	}
+
+	description = "Faturamento de cenários das distribuídoras"
+	main = 'br.com.ggas.faturamento.batch.cenarios.FaturarTask'
+	classpath = sourceSets.main.runtimeClasspath
+	maxHeapSize = "2024m"
+	jvmArgs "-XX:MaxPermSize=1024m", "-XX:-UseSplitVerifier"
+}
+
+/**
+ * Use esta task para gerar os arquivos javascripts de produção com webpack.
+ * Como resultado, produz a pasta web/dist com os arquivos javascripts minificados
+ */
+task npmBuild << {
+	def result = exec {
+		ignoreExitValue = true
+		if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+			executable "cmd" args "/c", "node -v"
+		} else {
+			executable "bash" args "-l", "-c", "command node -v"
+		}
+	}
+
+	if (result.getExitValue() != 0) {
+		logger.error("ERROR: É necessário instalar o NodeJS ver. >= 8.11.4 na máquina de desenvolvimento. Leia o arquivo web/README.md para mais informações.")
+		throw new GradleScriptException("Falha ao executar NodeJS")
+	}
+
+	def npmCommand = Os.isFamily(Os.FAMILY_WINDOWS) ? 'npm.cmd' : 'npm'
+
+	exec {
+		workingDir "$projectDir/web"
+
+		println "npm install"
+		commandLine npmCommand, "install"
+	}
+
+	//	exec {
+//		workingDir "$projectDir/web"
+//
+//		println "npm run build"
+//		commandLine npmCommand, "run", "build"
+//	}
+}
+
+/**
+ * Use esta task para copiar os arquivos da pasta web/dist, gerados pelo webpack,
+ * para dentro da pasta webapp do projeto
+ */
+task copyJavascriptDist(type: Copy) {
+	from 'web/dist'
+	into 'src/main/webapp/dist/'
+	include '**/*'
+}
+
+task makeJava(dependsOn: [compileJasperJava, copyJasper, compileJava, copyHbm, copyHbmResources, copyHbmBuild, copyHbmCobertura])
+
+war.dependsOn npmBuild, copyJavascriptDist, shadowJar
+build.dependsOn npmBuild, copyJavascriptDist
+classes.dependsOn makeJava, npmBuild
+shadowJar.dependsOn copySpringConfigJar, copyHbmJar
+
+subprojects {
+	apply plugin: "java"
+	sonarRunner {
+		sonarProperties {
+			property "sonar.junit.reportsPath", test.reports.junitXml.destination
+		}
+	}
+}
+
+
+test {
+	include( 'br/com/ggas/**')
+	exclude( '**/GgasSuiteSelenium.class')
+	exclude( 'br/com/ggas/selenium/**')
+	exclude( '**/GgasSuiteProcessosBatch.class')
+	exclude( '**/GgasSuiteCenario.class')
+
+	maxHeapSize = "1524m"
+	jvmArgs "-XX:MaxPermSize=512m", "-XX:-UseSplitVerifier"
+}
+
+
+task runSelenium(type: Test) {
+
+	include( '**/GgasSuiteSelenium.class')
+	maxHeapSize = "1524m"
+	jvmArgs "-XX:MaxPermSize=512m", "-XX:-UseSplitVerifier"
+}
+
+test.finalizedBy runSelenium
+
+
+jacoco {
+	toolVersion = "0.7.6.201602180812"
+}
+
+jacocoTestReport {
+
+	group = "Reporting"
+	description = "Generate Jacoco coverage reports after running tests."
+
+	executionData = fileTree(dir: 'build/jacoco', include: '**/*.exec')
+
+	reports {
+		xml{
+			enabled true
+			destination "${buildDir}/reports/jacoco/xml/jacoco.xml"
+		}
+		csv.enabled false
+		html{
+			enabled true
+			destination "${buildDir}/reports/jacoco/html"
+		}
+	}
+	sourceDirectories = files('src/main/java')
+	classDirectories =  files('build/classes/main')
+}
+
