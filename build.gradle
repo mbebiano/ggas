@@ -246,7 +246,7 @@ dependencies {
 //			include(name: '**.jrxml')
 //		}
 //	}
-}
+//}
 
 def sonar = new Properties()
 file("src/main/resources/sonar.properties").withInputStream { sonar.load(it) }
